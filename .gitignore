@@ -163,3 +163,17 @@ cython_debug/
 *.mp3
 *.srt
 /.idea/
+
+# Web 前端依赖与运行时文件
+node_modules/
+*.pid
+
+# Edge-TTS Web 运行时与构建产物
+/edge-tts-web/backend/downloads/
+/edge-tts-web/backend/venv/
+/edge-tts-web/frontend/dist/
+/edge-tts-web/frontend/node_modules/
+
+# 本地 AI 协作过程文件
+CLAUDE.md
+.claude/
