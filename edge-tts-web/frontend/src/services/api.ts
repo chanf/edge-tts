@@ -77,10 +77,20 @@ class ApiClient {
     });
   }
 
-  async getHistory(search?: string): Promise<HistoryListResponse> {
+  async getHistory(
+    search?: string,
+    page?: number,
+    pageSize?: number
+  ): Promise<HistoryListResponse> {
     const queryParams = new URLSearchParams();
     if (search && search.trim()) {
       queryParams.set("search", search.trim());
+    }
+    if (typeof page === "number") {
+      queryParams.set("page", String(page));
+    }
+    if (typeof pageSize === "number") {
+      queryParams.set("page_size", String(pageSize));
     }
 
     const query = queryParams.toString();
@@ -98,8 +108,22 @@ class ApiClient {
     return `${this.baseUrl}/downloads/${filename}`;
   }
 
-  getHistoryZipUrl(itemId: string): string {
-    return `${this.baseUrl}/api/tts/history/${encodeURIComponent(itemId)}/download`;
+  getHistoryZipUrl(itemId: string, speed?: number): string {
+    const url = new URL(`${this.baseUrl}/api/tts/history/${encodeURIComponent(itemId)}/download`);
+    if (typeof speed === "number") {
+      url.searchParams.set("speed", String(speed));
+    }
+    return url.toString();
+  }
+
+  getHistoryAudioUrl(itemId: string, speed?: number): string {
+    const url = new URL(
+      `${this.baseUrl}/api/tts/history/${encodeURIComponent(itemId)}/download-audio`
+    );
+    if (typeof speed === "number") {
+      url.searchParams.set("speed", String(speed));
+    }
+    return url.toString();
   }
 
   private resolveFilenameFromDisposition(disposition: string | null, fallback: string): string {
@@ -113,9 +137,31 @@ class ApiClient {
     return match[1];
   }
 
-  async downloadHistoryZip(itemId: string): Promise<void> {
+  async downloadHistoryZip(itemId: string, speed?: number): Promise<void> {
     const fallbackFilename = `${itemId}.zip`;
-    const response = await fetch(this.getHistoryZipUrl(itemId));
+    const response = await fetch(this.getHistoryZipUrl(itemId, speed));
+    if (!response.ok) {
+      throw new Error(`Download failed: ${response.status} ${response.statusText}`);
+    }
+
+    const filename = this.resolveFilenameFromDisposition(
+      response.headers.get("content-disposition"),
+      fallbackFilename
+    );
+    const blob = await response.blob();
+    const objectUrl = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = objectUrl;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(objectUrl);
+  }
+
+  async downloadHistoryAudio(itemId: string, speed?: number): Promise<void> {
+    const fallbackFilename = `${itemId}.mp3`;
+    const response = await fetch(this.getHistoryAudioUrl(itemId, speed));
     if (!response.ok) {
       throw new Error(`Download failed: ${response.status} ${response.statusText}`);
     }

@@ -65,6 +65,7 @@ export const zh = {
   previous: "上一个",
   next: "下一个",
   downloadZip: "下载 ZIP",
+  downloadAudio: "下载音频",
   playerVolume: "播放音量",
   playerSpeed: "播放速度",
   playerLoop: "循环播放",
@@ -105,6 +106,10 @@ export const zh = {
   deleteSelected: "批量删除",
   createdAt: "创建时间",
   actions: "操作",
+  totalItems: "共 {count} 条",
+  previousPage: "上一页",
+  nextPage: "下一页",
+  pageLabel: "第 {page} / {total} 页",
 };
 
 export type Translations = typeof zh;

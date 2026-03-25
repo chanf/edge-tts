@@ -10,8 +10,12 @@ interface HistoryListProps {
   error: string | null;
   search: string;
   onSearchChange: (value: string) => void;
+  page: number;
+  pageSize: number;
+  total: number;
+  onPageChange: (page: number) => void;
   currentItemId: string | null;
-  onSelectItem: (id: string) => void;
+  onPlayItem: (id: string) => void;
   selectedIds: string[];
   onToggleSelectItem: (id: string) => void;
   onToggleSelectAll: (checked: boolean) => void;
@@ -60,8 +64,12 @@ export function HistoryList({
   error,
   search,
   onSearchChange,
+  page,
+  pageSize,
+  total,
+  onPageChange,
   currentItemId,
-  onSelectItem,
+  onPlayItem,
   selectedIds,
   onToggleSelectItem,
   onToggleSelectAll,
@@ -70,6 +78,9 @@ export function HistoryList({
 }: HistoryListProps) {
   const t = useT();
   const allSelected = items.length > 0 && selectedIds.length === items.length;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const canGoPrev = page > 1;
+  const canGoNext = page < totalPages;
 
   return (
     <div className="bg-white rounded-lg shadow p-6">
@@ -158,7 +169,7 @@ export function HistoryList({
                       <div className="flex items-center gap-2">
                         <button
                           type="button"
-                          onClick={() => onSelectItem(item.id)}
+                          onClick={() => onPlayItem(item.id)}
                           aria-label={t.play}
                           title={t.play}
                           className="px-2 py-1 rounded bg-blue-600 text-white hover:bg-blue-700 transition-colors"
@@ -184,6 +195,21 @@ export function HistoryList({
                         </button>
                         <button
                           type="button"
+                          onClick={() => {
+                            void apiClient.downloadHistoryAudio(item.id).catch(() => {
+                              window.alert(t.downloadFailed);
+                            });
+                          }}
+                          aria-label={t.downloadAudio}
+                          title={t.downloadAudio}
+                          className="px-2 py-1 rounded bg-emerald-600 text-white hover:bg-emerald-700 transition-colors"
+                        >
+                          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                            <path d="M12 3v10.55a4 4 0 1 0 2 3.45V7h4V3h-6z" />
+                          </svg>
+                        </button>
+                        <button
+                          type="button"
                           onClick={() => onDeleteItem(item.id)}
                           aria-label={t.delete}
                           title={t.delete}
@@ -202,6 +228,37 @@ export function HistoryList({
           </table>
         </div>
       )}
+
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm text-gray-600">
+        <div>{t.totalItems.replace("{count}", String(total))}</div>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => onPageChange(page - 1)}
+            disabled={!canGoPrev}
+            className={`px-3 py-1 rounded ${
+              canGoPrev ? "bg-gray-200 hover:bg-gray-300" : "bg-gray-100 text-gray-400 cursor-not-allowed"
+            }`}
+          >
+            {t.previousPage}
+          </button>
+          <span>
+            {t.pageLabel
+              .replace("{page}", String(page))
+              .replace("{total}", String(totalPages))}
+          </span>
+          <button
+            type="button"
+            onClick={() => onPageChange(page + 1)}
+            disabled={!canGoNext}
+            className={`px-3 py-1 rounded ${
+              canGoNext ? "bg-gray-200 hover:bg-gray-300" : "bg-gray-100 text-gray-400 cursor-not-allowed"
+            }`}
+          >
+            {t.nextPage}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

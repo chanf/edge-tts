@@ -65,6 +65,7 @@ export const en = {
   previous: "Previous",
   next: "Next",
   downloadZip: "Download ZIP",
+  downloadAudio: "Download Audio",
   playerVolume: "Volume",
   playerSpeed: "Speed",
   playerLoop: "Loop playlist",
@@ -105,4 +106,8 @@ export const en = {
   deleteSelected: "Delete Selected",
   createdAt: "Created At",
   actions: "Actions",
+  totalItems: "Total {count}",
+  previousPage: "Prev",
+  nextPage: "Next",
+  pageLabel: "Page {page} / {total}",
 };

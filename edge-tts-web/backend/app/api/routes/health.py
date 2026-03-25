@@ -3,6 +3,7 @@
 from fastapi import APIRouter
 
 from ...models.responses import HealthResponse
+from ...services.storage import get_storage_mode
 
 router = APIRouter(prefix="/api/health", tags=["health"])
 
@@ -18,4 +19,5 @@ async def health_check() -> HealthResponse:
         status="healthy",
         edge_service="reachable",
         version="1.0.0",
+        storage_mode=get_storage_mode(),
     )

@@ -32,6 +32,36 @@ print_warning() {
     echo -e "${YELLOW}[WARNING]${NC} $1"
 }
 
+# 根据 PID 文件停止进程
+kill_process_by_pidfile() {
+    local pid_file=$1
+    local name=$2
+
+    if [ ! -f "$pid_file" ]; then
+        return
+    fi
+
+    local pid
+    pid=$(cat "$pid_file" 2>/dev/null || true)
+    if [ -z "$pid" ]; then
+        return
+    fi
+
+    if ps -p "$pid" >/dev/null 2>&1; then
+        print_info "停止 $name (PID: $pid)..."
+        kill "$pid" 2>/dev/null || true
+        sleep 1
+
+        if ps -p "$pid" >/dev/null 2>&1; then
+            print_warning "强制终止 $name..."
+            kill -9 "$pid" 2>/dev/null || true
+            sleep 1
+        fi
+
+        print_success "$name 已停止"
+    fi
+}
+
 # 清理后端缓存
 clean_backend_cache() {
     print_info "清理后端 Python 缓存..."
@@ -255,8 +285,11 @@ main() {
     # 停止服务
     kill_process_on_port $BACKEND_PORT "后端服务"
     kill_process_on_port $FRONTEND_PORT "前端服务"
+    kill_process_by_pidfile "$BACKEND_DIR/backend.pid" "后端服务(PID 文件)"
+    kill_process_by_pidfile "$FRONTEND_DIR/frontend.pid" "前端服务(PID 文件)"
     kill_process_by_pattern "uvicorn.*app.main:app" "后端进程"
     kill_process_by_pattern "vite.*--port $FRONTEND_PORT" "前端进程"
+    kill_process_by_pattern "$FRONTEND_DIR/node_modules/.bin/vite" "前端进程(路径匹配)"
 
     # 清理 PID 文件
     rm -f "$BACKEND_DIR/backend.pid" "$FRONTEND_DIR/frontend.pid"

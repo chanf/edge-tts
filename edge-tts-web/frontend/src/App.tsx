@@ -22,12 +22,17 @@ function AppContent() {
     error: historyError,
     search,
     setSearch,
+    page,
+    setPage,
+    pageSize,
+    total: historyTotal,
     addHistoryItem,
     deleteHistoryItems,
   } = useHistory();
 
   const [isGenerating, setIsGenerating] = useState(false);
   const [currentItemId, setCurrentItemId] = useState<string | null>(null);
+  const [playRequest, setPlayRequest] = useState<{ id: string; token: number } | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const currentItem = historyItems.find((item) => item.id === currentItemId) || null;
@@ -101,6 +106,10 @@ function AppContent() {
     }
   };
 
+  const handlePlayHistoryItem = (id: string) => {
+    setPlayRequest((prev) => ({ id, token: (prev?.token ?? 0) + 1 }));
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       <header className="bg-white shadow-sm">
@@ -113,7 +122,7 @@ function AppContent() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 py-8">
+      <main className="max-w-7xl mx-auto px-4 py-8 space-y-6">
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
           <div className="space-y-6">
             <TextInput />
@@ -141,27 +150,36 @@ function AppContent() {
               items={historyItems}
               currentItemId={currentItemId}
               onCurrentItemChange={setCurrentItemId}
+              playRequest={playRequest}
             />
             <SubtitleDisplay subtitleUrl={currentItem?.subtitle_url || null} />
-            <HistoryList
-              items={historyItems}
-              loading={historyLoading}
-              error={historyError}
-              search={search}
-              onSearchChange={(value) => {
-                setSearch(value);
-                setSelectedIds([]);
-              }}
-              currentItemId={currentItemId}
-              onSelectItem={setCurrentItemId}
-              selectedIds={selectedIds}
-              onToggleSelectItem={handleToggleSelectItem}
-              onToggleSelectAll={handleToggleSelectAll}
-              onDeleteItem={(id) => void handleDelete([id])}
-              onDeleteSelected={() => void handleDelete(selectedIds)}
-            />
           </div>
         </div>
+        <HistoryList
+          items={historyItems}
+          loading={historyLoading}
+          error={historyError}
+          search={search}
+          onSearchChange={(value) => {
+            setSearch(value);
+            setSelectedIds([]);
+            setPage(1);
+          }}
+          page={page}
+          pageSize={pageSize}
+          total={historyTotal}
+          onPageChange={(nextPage) => {
+            setPage(nextPage);
+            setSelectedIds([]);
+          }}
+          currentItemId={currentItemId}
+          onPlayItem={handlePlayHistoryItem}
+          selectedIds={selectedIds}
+          onToggleSelectItem={handleToggleSelectItem}
+          onToggleSelectAll={handleToggleSelectAll}
+          onDeleteItem={(id) => void handleDelete([id])}
+          onDeleteSelected={() => void handleDelete(selectedIds)}
+        />
       </main>
 
       <footer className="bg-white border-t border-gray-200 mt-12">

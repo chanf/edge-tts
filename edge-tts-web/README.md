@@ -10,7 +10,7 @@ A web-based user interface for [edge-tts](https://github.com/rany2/edge-tts), pr
 - **Subtitle Generation**: Generate SRT subtitles with word or sentence boundary options
 - **Voice Filtering**: Filter voices by locale, gender, or search by name
 - **Audio Playback**: Custom audio player with synchronized subtitle display
-- **Export**: Download generated audio (MP3) and subtitle (SRT) files
+- **Export**: Download generated audio + subtitles as ZIP (MP3 + SRT)
 
 ## Technology Stack
 
@@ -31,9 +31,9 @@ cd edge-tts-web
 1. 检查并停止已运行的服务
 2. 安装所有依赖
 3. 启动后端服务 (端口 6605)
-4. 启动前端服务 (端口 3000)
+4. 启动前端服务 (端口 6606)
 
-访问 http://localhost:3000
+访问 http://localhost:6606
 
 ### 停止服务
 
@@ -96,6 +96,70 @@ The application will be available at:
 - Frontend: http://localhost:6606
 - Backend API: http://localhost:6605
 - API Docs: http://localhost:6605/docs
+
+## Storage Modes
+
+The backend supports two storage modes:
+
+- `local` (default): store audio/subtitles/history under `backend/downloads`
+- `cloudflare`: store audio/subtitles in R2 and history metadata in D1
+
+Switch storage mode via environment variable:
+
+```bash
+EDGE_TTS_STORAGE_MODE=local
+EDGE_TTS_STORAGE_MODE=cloudflare
+```
+
+## Cloudflare Deployment (Containers + R2 + D1)
+
+### Required Environment Variables
+
+```bash
+# Storage mode
+EDGE_TTS_STORAGE_MODE=cloudflare
+
+# CORS
+ALLOWED_ORIGINS=https://your-frontend-domain.example
+
+# R2
+CF_R2_ENDPOINT=https://<accountid>.r2.cloudflarestorage.com
+CF_R2_BUCKET=your-bucket
+CF_R2_ACCESS_KEY_ID=***
+CF_R2_SECRET_ACCESS_KEY=***
+
+# D1
+CF_ACCOUNT_ID=***
+CF_D1_DATABASE_ID=***
+CF_D1_API_TOKEN=***
+
+### 变速下载依赖
+
+播放器支持按播放速度下载变速 ZIP（MP3 + SRT）。此功能需要后端运行环境可用 `ffmpeg`。
+Cloudflare Containers 镜像请确保安装 `ffmpeg`，否则 `speed!=1` 的下载会失败。
+```
+
+### D1 Schema
+
+```sql
+CREATE TABLE IF NOT EXISTS tts_history (
+  id TEXT PRIMARY KEY,
+  created_at TEXT NOT NULL,
+  text_preview TEXT NOT NULL,
+  text TEXT NOT NULL,
+  voice TEXT NOT NULL,
+  rate TEXT NOT NULL,
+  volume TEXT NOT NULL,
+  pitch TEXT NOT NULL,
+  boundary TEXT NOT NULL,
+  duration_ms INTEGER NOT NULL,
+  word_count INTEGER NOT NULL,
+  audio_key TEXT NOT NULL,
+  subtitle_key TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_tts_history_created_at ON tts_history(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_tts_history_voice ON tts_history(voice);
+```
 
 ### Production Mode
 

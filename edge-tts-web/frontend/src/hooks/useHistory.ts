@@ -11,29 +11,46 @@ export function useHistory() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+  const [total, setTotal] = useState(0);
+  const [debouncedSearch, setDebouncedSearch] = useState(search);
 
-  const loadHistory = useCallback(async (searchValue: string) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await apiClient.getHistory(searchValue);
-      setItems(response.items);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load history");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const loadHistory = useCallback(
+    async (searchValue: string, pageValue: number, pageSizeValue: number) => {
+      setLoading(true);
+      setError(null);
+      try {
+        const response = await apiClient.getHistory(searchValue, pageValue, pageSizeValue);
+        setItems(response.items);
+        setTotal(response.total);
+
+        const totalPages = Math.max(1, Math.ceil(response.total / pageSizeValue));
+        if (pageValue > totalPages) {
+          setPage(totalPages);
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to load history");
+      } finally {
+        setLoading(false);
+      }
+    },
+    []
+  );
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      loadHistory(search);
+      setDebouncedSearch(search);
     }, SEARCH_DEBOUNCE_MS);
 
     return () => {
       window.clearTimeout(timer);
     };
-  }, [loadHistory, search]);
+  }, [search]);
+
+  useEffect(() => {
+    void loadHistory(debouncedSearch, page, pageSize);
+  }, [debouncedSearch, loadHistory, page, pageSize]);
 
   const addHistoryItem = useCallback((item: HistoryItem) => {
     setItems((prev) => [item, ...prev.filter((existing) => existing.id !== item.id)]);
@@ -52,9 +69,10 @@ export function useHistory() {
 
       const response = await apiClient.deleteHistory(ids);
       removeHistoryItems(response.deleted_ids);
+      void loadHistory(debouncedSearch, page, pageSize);
       return { deleted: response.deleted_ids, failed: response.failed_ids };
     },
-    [removeHistoryItems]
+    [debouncedSearch, loadHistory, page, pageSize, removeHistoryItems]
   );
 
   return useMemo(
@@ -64,18 +82,27 @@ export function useHistory() {
       error,
       search,
       setSearch,
+      page,
+      setPage,
+      pageSize,
+      setPageSize,
+      total,
       addHistoryItem,
       deleteHistoryItems,
-      reload: () => loadHistory(search),
+      reload: () => loadHistory(debouncedSearch, page, pageSize),
     }),
     [
       addHistoryItem,
       deleteHistoryItems,
+      debouncedSearch,
       error,
       items,
       loadHistory,
       loading,
+      page,
+      pageSize,
       search,
+      total,
     ]
   );
 }

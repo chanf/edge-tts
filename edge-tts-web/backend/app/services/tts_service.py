@@ -3,17 +3,16 @@
 import asyncio
 import base64
 import inspect
-import json
 import re
 import uuid
 from datetime import datetime
-from pathlib import Path
 from typing import AsyncGenerator, Dict, List, Optional, Tuple
 
 from edge_tts import Communicate, SubMaker, list_voices
 
 from ..models.requests import TTSRequest
 from ..models.responses import HistoryItem, VoiceResponse
+from .storage import get_history_store
 
 
 class TTSService:
@@ -120,9 +119,6 @@ class TTSService:
         Returns:
             History item for the generated result.
         """
-        output_path = Path(output_dir)
-        output_path.mkdir(parents=True, exist_ok=True)
-
         # Generate unique ID
         request_id = uuid.uuid4().hex[:8]
         timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
@@ -130,7 +126,6 @@ class TTSService:
         created_at = datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
         audio_filename = f"{item_id}.mp3"
         subtitle_filename = f"{item_id}.srt"
-        metadata_filename = f"{item_id}.json"
 
         # Create communicate object
         communicate = TTSService._create_communicate(request)
@@ -153,13 +148,9 @@ class TTSService:
 
         # Combine audio chunks
         audio_bytes = b"".join(audio_chunks)
-        with open(output_path / audio_filename, "wb") as f:
-            f.write(audio_bytes)
 
         # Generate subtitles
         srt_content = submaker.get_srt()
-        with open(output_path / subtitle_filename, "w", encoding="utf-8") as f:
-            f.write(srt_content)
 
         # Convert duration from 100ns units to milliseconds
         duration_ms = total_duration // 10000
@@ -182,85 +173,40 @@ class TTSService:
             word_count=word_count,
             audio_filename=audio_filename,
             subtitle_filename=subtitle_filename,
-            audio_url=f"/downloads/{audio_filename}",
-            subtitle_url=f"/downloads/{subtitle_filename}",
+            audio_url="",
+            subtitle_url="",
         )
-
-        with open(output_path / metadata_filename, "w", encoding="utf-8") as f:
-            json.dump(history_item.model_dump(), f, ensure_ascii=False, indent=2)
-
-        return history_item
+        store = get_history_store(output_dir)
+        return await store.save(history_item, audio_bytes, srt_content)
 
     @staticmethod
     async def get_history(
-        output_dir: str = "downloads", search: Optional[str] = None
+        output_dir: str = "downloads",
+        search: Optional[str] = None,
+        page: Optional[int] = None,
+        page_size: Optional[int] = None,
     ) -> Tuple[List[HistoryItem], int]:
-        """Get history list from persisted metadata files."""
-        output_path = Path(output_dir)
-        if not output_path.exists():
-            return [], 0
+        """Get history list from persisted storage."""
+        store = get_history_store(output_dir)
+        if page_size is None:
+            return await store.list(search)
 
-        items: List[HistoryItem] = []
-        for metadata_path in output_path.glob("*.json"):
-            try:
-                with open(metadata_path, "r", encoding="utf-8") as f:
-                    data = json.load(f)
-                items.append(HistoryItem.model_validate(data))
-            except (OSError, json.JSONDecodeError, ValueError):
-                continue
-
-        items.sort(key=lambda item: item.created_at, reverse=True)
-
-        normalized_search = (search or "").strip().lower()
-        if normalized_search:
-            items = [
-                item
-                for item in items
-                if normalized_search
-                in " ".join(
-                    [
-                        item.id,
-                        item.created_at,
-                        item.voice,
-                        item.text_preview,
-                        item.text,
-                    ]
-                ).lower()
-            ]
-
-        return items, len(items)
+        resolved_page = page or 1
+        offset = max(resolved_page - 1, 0) * page_size
+        return await store.list(search, offset=offset, limit=page_size)
 
     @staticmethod
     async def delete_history(
         ids: List[str], output_dir: str = "downloads"
     ) -> Tuple[List[str], List[str]]:
         """Delete history items and associated files."""
-        output_path = Path(output_dir)
-        deleted_ids: List[str] = []
-        failed_ids: List[str] = []
         safe_id_pattern = re.compile(r"^[A-Za-z0-9_-]+$")
+        valid_ids = [item_id for item_id in ids if safe_id_pattern.fullmatch(item_id)]
+        invalid_ids = [item_id for item_id in ids if not safe_id_pattern.fullmatch(item_id)]
 
-        for item_id in ids:
-            if not safe_id_pattern.fullmatch(item_id):
-                failed_ids.append(item_id)
-                continue
-
-            removed_any = False
-            try:
-                for ext in (".mp3", ".srt", ".json"):
-                    file_path = output_path / f"{item_id}{ext}"
-                    if file_path.exists():
-                        file_path.unlink()
-                        removed_any = True
-            except OSError:
-                failed_ids.append(item_id)
-                continue
-
-            if removed_any:
-                deleted_ids.append(item_id)
-            else:
-                failed_ids.append(item_id)
-
+        store = get_history_store(output_dir)
+        deleted_ids, failed_ids = await store.delete(valid_ids)
+        failed_ids.extend(invalid_ids)
         return deleted_ids, failed_ids
 
     @staticmethod

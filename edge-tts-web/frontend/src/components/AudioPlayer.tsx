@@ -15,6 +15,7 @@ interface AudioPlayerProps {
   items: HistoryItem[];
   currentItemId: string | null;
   onCurrentItemChange: (id: string | null) => void;
+  playRequest: { id: string; token: number } | null;
 }
 
 function parseSrtTimeToSeconds(value: string): number {
@@ -76,7 +77,12 @@ function isTypingTarget(target: EventTarget | null): boolean {
   );
 }
 
-export function AudioPlayer({ items, currentItemId, onCurrentItemChange }: AudioPlayerProps) {
+export function AudioPlayer({
+  items,
+  currentItemId,
+  onCurrentItemChange,
+  playRequest,
+}: AudioPlayerProps) {
   const t = useT();
   const audioRef = useRef<HTMLAudioElement>(null);
   const autoPlayAfterSwitchRef = useRef(false);
@@ -106,6 +112,29 @@ export function AudioPlayer({ items, currentItemId, onCurrentItemChange }: Audio
       onCurrentItemChange(items[0].id);
     }
   }, [currentItemId, items, onCurrentItemChange]);
+
+  useEffect(() => {
+    if (!playRequest) {
+      return;
+    }
+    const requestedItem = items.find((item) => item.id === playRequest.id);
+    if (!requestedItem) {
+      return;
+    }
+
+    const audio = audioRef.current;
+    if (!audio) {
+      return;
+    }
+
+    if (currentItem && currentItem.id === playRequest.id) {
+      void audio.play();
+      return;
+    }
+
+    autoPlayAfterSwitchRef.current = true;
+    onCurrentItemChange(playRequest.id);
+  }, [currentItem, items, onCurrentItemChange, playRequest]);
 
   const goToIndex = useCallback(
     (nextIndex: number, autoPlay: boolean) => {
@@ -164,10 +193,19 @@ export function AudioPlayer({ items, currentItemId, onCurrentItemChange }: Audio
     if (!currentItem) {
       return;
     }
-    void apiClient.downloadHistoryZip(currentItem.id).catch(() => {
+    void apiClient.downloadHistoryZip(currentItem.id, playbackRate).catch(() => {
       window.alert(t.downloadFailed);
     });
-  }, [currentItem, t.downloadFailed]);
+  }, [currentItem, playbackRate, t.downloadFailed]);
+
+  const handleDownloadAudio = useCallback(() => {
+    if (!currentItem) {
+      return;
+    }
+    void apiClient.downloadHistoryAudio(currentItem.id, playbackRate).catch(() => {
+      window.alert(t.downloadFailed);
+    });
+  }, [currentItem, playbackRate, t.downloadFailed]);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -340,6 +378,8 @@ export function AudioPlayer({ items, currentItemId, onCurrentItemChange }: Audio
 
   const canGoPrevious = loopPlaylist || currentIndex > 0;
   const canGoNext = loopPlaylist || currentIndex < items.length - 1;
+  const effectiveDuration = playbackRate > 0 ? duration / playbackRate : duration;
+  const effectiveCurrent = playbackRate > 0 ? currentTime / playbackRate : currentTime;
 
   return (
     <div className="bg-white rounded-lg shadow p-6">
@@ -410,29 +450,41 @@ export function AudioPlayer({ items, currentItemId, onCurrentItemChange }: Audio
               <path d="M5 20h14v-2H5v2zm7-18v10.17l3.59-3.58L17 10l-5 5-5-5 1.41-1.41L11 12.17V2h1z" />
             </svg>
           </button>
+          <button
+            type="button"
+            onClick={handleDownloadAudio}
+            aria-label={t.downloadAudio}
+            title={t.downloadAudio}
+            className="px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white transition-colors"
+          >
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M12 3v10.55a4 4 0 1 0 2 3.45V7h4V3h-6z" />
+            </svg>
+          </button>
         </div>
 
         <div className="space-y-2">
           <input
             type="range"
             min={0}
-            max={duration || 0}
+            max={effectiveDuration || 0}
             step={0.1}
-            value={Math.min(currentTime, duration || 0)}
+            value={Math.min(effectiveCurrent, effectiveDuration || 0)}
             onChange={(e) => {
               const audio = audioRef.current;
               if (!audio) {
                 return;
               }
               const value = Number.parseFloat(e.target.value);
-              audio.currentTime = Number.isFinite(value) ? value : 0;
+              const nextTime = Number.isFinite(value) ? value * playbackRate : 0;
+              audio.currentTime = Number.isFinite(nextTime) ? nextTime : 0;
               setCurrentTime(audio.currentTime);
             }}
             className="w-full accent-blue-600"
           />
           <div className="flex items-center justify-between text-xs text-gray-500">
-            <span>{formatTime(currentTime)}</span>
-            <span>{formatTime(duration)}</span>
+            <span>{formatTime(effectiveCurrent)}</span>
+            <span>{formatTime(effectiveDuration)}</span>
           </div>
         </div>
 

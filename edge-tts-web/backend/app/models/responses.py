@@ -63,6 +63,7 @@ class HealthResponse(BaseModel):
     status: str
     edge_service: str
     version: str
+    storage_mode: str
 
 
 class WSMessage(BaseModel):

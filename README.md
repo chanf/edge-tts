@@ -23,13 +23,13 @@ pipx install edge-tts
 生成音频并写出字幕：
 
 ```bash
-edge-tts --text "Hello, world!" --write-media hello.mp3 --write-subtitles hello.srt
+edge-tts --text "你好，世界！" --write-media hello.mp3 --write-subtitles hello.srt
 ```
 
 直接播放（带字幕）：
 
 ```bash
-edge-playback --text "Hello, world!"
+edge-playback --text "你好，世界！"
 ```
 
 说明：
@@ -56,9 +56,9 @@ edge-tts --voice ar-EG-SalmaNeural --text "مرحبا كيف حالك؟" --write
 如果使用负值，请写成 `--option=-50%`（带等号），避免被解析为新参数。
 
 ```bash
-edge-tts --rate=-50% --text "Hello, world!" --write-media hello_with_rate_lowered.mp3 --write-subtitles hello_with_rate_lowered.srt
-edge-tts --volume=-50% --text "Hello, world!" --write-media hello_with_volume_lowered.mp3 --write-subtitles hello_with_volume_lowered.srt
-edge-tts --pitch=-50Hz --text "Hello, world!" --write-media hello_with_pitch_lowered.mp3 --write-subtitles hello_with_pitch_lowered.srt
+edge-tts --rate=-50% --text "你好，世界！" --write-media hello_with_rate_lowered.mp3 --write-subtitles hello_with_rate_lowered.srt
+edge-tts --volume=-50% --text "你好，世界！" --write-media hello_with_volume_lowered.mp3 --write-subtitles hello_with_volume_lowered.srt
+edge-tts --pitch=-50Hz --text "你好，世界！" --write-media hello_with_pitch_lowered.mp3 --write-subtitles hello_with_pitch_lowered.srt
 ```
 
 ### 关于自定义 SSML
@@ -78,13 +78,13 @@ edge-tts --pitch=-50Hz --text "Hello, world!" --write-media hello_with_pitch_low
 - [Podcastfy](https://github.com/souzatharsis/podcastfy/blob/main/podcastfy/tts/providers/edge.py)
 - [tts-samples](https://github.com/yaph/tts-samples/blob/main/bin/create_sound_samples.py)：提供了便于挑选音色的 [mp3 示例集合](https://github.com/yaph/tts-samples/tree/main/mp3)。
 
-## Web 前端（edge-tts-web）
+## 网页前端（edge-tts-web）
 
-仓库内置 `edge-tts-web` 子项目，提供可视化 Web 界面。
+仓库内置 `edge-tts-web` 子项目，提供可视化网页界面。
 
 ### 运行截图
 
-![Edge-TTS Web 前端运行截图](screen/srceen.png)
+![edge-tts 网页前端运行截图](screen/srceen.png)
 
 ### 技术栈与组成
 

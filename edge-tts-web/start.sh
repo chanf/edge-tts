@@ -142,7 +142,7 @@ install_backend_deps() {
 
     source "$BACKEND_DIR/venv/bin/activate"
 
-    if [ ! -f "$BACKEND_DIR/venv/.installed" ]; then
+    if [ ! -f "$BACKEND_DIR/venv/.installed" ] || [ "$BACKEND_DIR/venv/.installed" -ot "$BACKEND_DIR/requirements.txt" ]; then
         print_info "安装后端 Python 依赖..."
         pip install -q -r "$BACKEND_DIR/requirements.txt"
         touch "$BACKEND_DIR/venv/.installed"
@@ -217,12 +217,20 @@ main() {
     # 启动前端服务
     print_info "启动前端服务 (端口 $FRONTEND_PORT)..."
     cd "$FRONTEND_DIR"
-    nohup npm run dev -- --port $FRONTEND_PORT > "$FRONTEND_DIR/frontend.log" 2>&1 &
+    nohup npm run dev -- --port $FRONTEND_PORT --strictPort > "$FRONTEND_DIR/frontend.log" 2>&1 &
     FRONTEND_PID=$!
     echo $FRONTEND_PID > "$FRONTEND_DIR/frontend.pid"
 
     # 等待前端启动
     sleep 3
+
+    # 检查前端是否启动成功
+    if lsof -ti:$FRONTEND_PORT >/dev/null 2>&1; then
+        print_success "前端服务启动成功 (PID: $FRONTEND_PID)"
+    else
+        print_error "前端服务启动失败，请查看日志: $FRONTEND_DIR/frontend.log"
+        exit 1
+    fi
 
     echo ""
     echo -e "${GREEN}╔═══════════════════════════════════════════════════════╗"

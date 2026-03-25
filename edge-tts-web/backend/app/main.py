@@ -8,8 +8,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from .api.routes import health, tts, voices
+from .api.routes import downloads, health, tts, voices
 from .api.websocket import tts_handler
+from .services.storage import get_storage_mode
 
 # Configure logging
 logging.basicConfig(
@@ -43,17 +44,25 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# Configure CORS
+allowed_origins_env = os.environ.get("ALLOWED_ORIGINS", "").strip()
+if allowed_origins_env:
+    allowed_origins = [origin.strip() for origin in allowed_origins_env.split(",") if origin.strip()]
+else:
+    allowed_origins = ["*"]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, specify actual origins
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Mount static files for downloads
-app.mount("/downloads", StaticFiles(directory=OUTPUT_DIR), name="downloads")
+storage_mode = get_storage_mode()
+if storage_mode == "cloudflare":
+    app.include_router(downloads.router)
+else:
+    app.mount("/downloads", StaticFiles(directory=OUTPUT_DIR), name="downloads")
 
 # Include routers
 app.include_router(health.router)
