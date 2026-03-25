@@ -1,6 +1,6 @@
-/** Subtitle display and export component. */
+/** Subtitle display component. */
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useT } from "../contexts/LanguageContext";
 import type { SubtitleCue } from "../types/api";
 
@@ -92,33 +92,12 @@ export function SubtitleDisplay({ subtitleUrl }: SubtitleDisplayProps) {
     };
   }, [subtitleUrl]);
 
-  const exportSRT = useCallback(() => {
-    if (!subtitleUrl) {
-      return;
-    }
-    const link = document.createElement("a");
-    link.href = subtitleUrl;
-    link.download = "subtitles.srt";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  }, [subtitleUrl]);
-
   return (
     <div className="bg-white rounded-lg shadow p-6">
-      <div className="flex justify-between items-center mb-4">
+      <div className="mb-4">
         <h3 className="text-lg font-semibold text-gray-700">
           {t.subtitles} ({count})
         </h3>
-        {count > 0 && (
-          <button
-            type="button"
-            onClick={exportSRT}
-            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
-          >
-            {t.downloadSRT}
-          </button>
-        )}
       </div>
 
       {loading ? (

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { HistoryItem } from "../types/api";
 import { useT } from "../contexts/LanguageContext";
+import { apiClient } from "../services/api";
 
 interface SubtitleCue {
   start: number;
@@ -95,6 +96,7 @@ export function AudioPlayer({ items, currentItemId, onCurrentItemChange }: Audio
   );
 
   const currentItem = currentIndex >= 0 ? items[currentIndex] : null;
+  const currentItemZipUrl = currentItem ? apiClient.getHistoryZipUrl(currentItem.id) : "";
 
   useEffect(() => {
     if (items.length === 0) {
@@ -389,6 +391,17 @@ export function AudioPlayer({ items, currentItemId, onCurrentItemChange }: Audio
               <path d="M16 5h2v14h-2V5zM14.5 12 4 19V5l10.5 7z" />
             </svg>
           </button>
+          <a
+            href={currentItemZipUrl}
+            download={`${currentItem.id}.zip`}
+            aria-label={t.downloadZip}
+            title={t.downloadZip}
+            className="px-3 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white transition-colors"
+          >
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M5 20h14v-2H5v2zm7-18v10.17l3.59-3.58L17 10l-5 5-5-5 1.41-1.41L11 12.17V2h1z" />
+            </svg>
+          </a>
         </div>
 
         <div className="space-y-2">

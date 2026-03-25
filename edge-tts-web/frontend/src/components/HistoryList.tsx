@@ -2,6 +2,7 @@
 
 import type { HistoryItem } from "../types/api";
 import { useT } from "../contexts/LanguageContext";
+import { apiClient } from "../services/api";
 
 interface HistoryListProps {
   items: HistoryItem[];
@@ -78,13 +79,19 @@ export function HistoryList({
           type="button"
           onClick={onDeleteSelected}
           disabled={selectedIds.length === 0}
+          aria-label={`${t.deleteSelected} (${selectedIds.length})`}
+          title={`${t.deleteSelected} (${selectedIds.length})`}
           className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
             selectedIds.length === 0
               ? "bg-gray-200 text-gray-500 cursor-not-allowed"
               : "bg-red-600 text-white hover:bg-red-700"
           }`}
         >
-          {t.deleteSelected} ({selectedIds.length})
+          <div className="flex items-center">
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M9 3h6l1 2h4v2H4V5h4l1-2zm1 6h2v9h-2V9zm4 0h2v9h-2V9zM7 9h2v9H7V9z" />
+            </svg>
+          </div>
         </button>
       </div>
 
@@ -128,6 +135,7 @@ export function HistoryList({
               {items.map((item) => {
                 const selected = selectedIds.includes(item.id);
                 const active = currentItemId === item.id;
+                const downloadZipUrl = apiClient.getHistoryZipUrl(item.id);
                 return (
                   <tr
                     key={item.id}
@@ -160,12 +168,27 @@ export function HistoryList({
                             <path d="M8 5v14l11-7z" />
                           </svg>
                         </button>
+                        <a
+                          href={downloadZipUrl}
+                          download={`${item.id}.zip`}
+                          aria-label={t.downloadZip}
+                          title={t.downloadZip}
+                          className="px-2 py-1 rounded bg-green-600 text-white hover:bg-green-700 transition-colors"
+                        >
+                          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                            <path d="M5 20h14v-2H5v2zm7-18v10.17l3.59-3.58L17 10l-5 5-5-5 1.41-1.41L11 12.17V2h1z" />
+                          </svg>
+                        </a>
                         <button
                           type="button"
                           onClick={() => onDeleteItem(item.id)}
+                          aria-label={t.delete}
+                          title={t.delete}
                           className="px-2 py-1 rounded bg-red-600 text-white hover:bg-red-700 transition-colors"
                         >
-                          {t.delete}
+                          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                            <path d="M9 3h6l1 2h4v2H4V5h4l1-2zm1 6h2v9h-2V9zm4 0h2v9h-2V9zM7 9h2v9H7V9z" />
+                          </svg>
                         </button>
                       </div>
                     </td>

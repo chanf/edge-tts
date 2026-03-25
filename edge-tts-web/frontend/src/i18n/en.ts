@@ -34,6 +34,10 @@ export const en = {
   of: "of",
   voices: "voices",
   clearFilters: "Clear filters",
+  favoriteVoices: "Favorite Voices",
+  noFavoriteVoices: "No favorite voices yet",
+  addToFavorites: "Add to favorites",
+  removeFromFavorites: "Remove from favorites",
 
   // AudioControls
   audioControls: "Audio Controls",
@@ -60,6 +64,7 @@ export const en = {
   pause: "Pause",
   previous: "Previous",
   next: "Next",
+  downloadZip: "Download ZIP",
   playerVolume: "Volume",
   playerSpeed: "Speed",
   playerLoop: "Loop playlist",
@@ -67,7 +72,6 @@ export const en = {
   // SubtitleDisplay
   subtitles: "Subtitles",
   noSubtitles: "No subtitles yet. Generate audio to see subtitles.",
-  downloadSRT: "Download SRT",
   time: "Time",
   text: "Text",
 

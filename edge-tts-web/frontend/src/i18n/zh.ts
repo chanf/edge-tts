@@ -34,6 +34,10 @@ export const zh = {
   of: "共",
   voices: "个语音",
   clearFilters: "清除筛选",
+  favoriteVoices: "常用语音",
+  noFavoriteVoices: "暂无常用语音",
+  addToFavorites: "加入常用",
+  removeFromFavorites: "移出常用",
 
   // AudioControls
   audioControls: "音频控制",
@@ -60,6 +64,7 @@ export const zh = {
   pause: "暂停",
   previous: "上一个",
   next: "下一个",
+  downloadZip: "下载 ZIP",
   playerVolume: "播放音量",
   playerSpeed: "播放速度",
   playerLoop: "循环播放",
@@ -67,7 +72,6 @@ export const zh = {
   // SubtitleDisplay
   subtitles: "字幕",
   noSubtitles: "暂无字幕，请先生成音频",
-  downloadSRT: "下载 SRT",
   time: "时间",
   text: "文本",
 

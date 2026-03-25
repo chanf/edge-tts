@@ -98,6 +98,10 @@ class ApiClient {
     return `${this.baseUrl}/downloads/${filename}`;
   }
 
+  getHistoryZipUrl(itemId: string): string {
+    return `${this.baseUrl}/api/tts/history/${encodeURIComponent(itemId)}/download`;
+  }
+
   getWebSocketUrl(): string {
     const wsUrl = this.baseUrl.replace("http://", "ws://").replace("https://", "wss://");
     return `${wsUrl}/api/tts/ws`;

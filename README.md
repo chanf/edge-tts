@@ -82,6 +82,10 @@ edge-tts --pitch=-50Hz --text "Hello, world!" --write-media hello_with_pitch_low
 
 仓库内置 `edge-tts-web` 子项目，提供可视化 Web 界面。
 
+### 运行截图
+
+![Edge-TTS Web 前端运行截图](screen/srceen.png)
+
 ### 技术栈与组成
 
 - 后端：`FastAPI + Uvicorn + edge-tts`（目录：`edge-tts-web/backend`）

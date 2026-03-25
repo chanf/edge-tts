@@ -1,10 +1,15 @@
 """TTS generation API routes."""
 
+import io
+import json
 import os
+import re
+import zipfile
+from pathlib import Path
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Query
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 
 from ...models.requests import HistoryDeleteRequest, TTSRequest
 from ...models.responses import (
@@ -18,6 +23,7 @@ router = APIRouter(prefix="/api/tts", tags=["tts"])
 
 # Output directory for generated files
 OUTPUT_DIR = os.environ.get("EDGE_TTS_OUTPUT_DIR", "downloads")
+SAFE_ITEM_ID_PATTERN = re.compile(r"^[A-Za-z0-9_-]+$")
 
 
 @router.post("/generate", response_model=TTSGenerateResponse)
@@ -97,4 +103,45 @@ async def download_file(filename: str) -> FileResponse:
         path=file_path,
         media_type=media_type,
         filename=filename,
+    )
+
+
+@router.get("/history/{item_id}/download")
+async def download_history_item_zip(item_id: str) -> Response:
+    """Download history item as ZIP package containing MP3 and SRT."""
+    if not SAFE_ITEM_ID_PATTERN.fullmatch(item_id):
+        raise HTTPException(status_code=400, detail="Invalid history item id")
+
+    output_path = Path(OUTPUT_DIR)
+    metadata_path = output_path / f"{item_id}.json"
+    if not metadata_path.exists():
+        raise HTTPException(status_code=404, detail="History item not found")
+
+    try:
+        with open(metadata_path, "r", encoding="utf-8") as metadata_file:
+            metadata = json.load(metadata_file)
+    except (OSError, json.JSONDecodeError):
+        raise HTTPException(status_code=404, detail="History item metadata is invalid")
+
+    audio_filename = metadata.get("audio_filename")
+    subtitle_filename = metadata.get("subtitle_filename")
+    if not isinstance(audio_filename, str) or not isinstance(subtitle_filename, str):
+        raise HTTPException(status_code=404, detail="History item files are missing")
+
+    audio_path = output_path / audio_filename
+    subtitle_path = output_path / subtitle_filename
+    if not audio_path.exists() or not subtitle_path.exists():
+        raise HTTPException(status_code=404, detail="History item files are missing")
+
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, mode="w", compression=zipfile.ZIP_DEFLATED) as zip_file:
+        zip_file.write(audio_path, arcname=audio_filename)
+        zip_file.write(subtitle_path, arcname=subtitle_filename)
+
+    zip_filename = f"{item_id}.zip"
+    headers = {"Content-Disposition": f'attachment; filename="{zip_filename}"'}
+    return Response(
+        content=zip_buffer.getvalue(),
+        media_type="application/zip",
+        headers=headers,
     )
