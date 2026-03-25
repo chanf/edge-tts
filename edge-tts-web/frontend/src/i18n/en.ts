@@ -86,6 +86,7 @@ export const en = {
   failedToLoadVoices: "Failed to load voices",
   voiceSelected: "Voice selected",
   generateFailed: "Failed to generate audio",
+  downloadFailed: "Download failed. Please retry (restart service if needed).",
   deleteFailed: "Failed to delete history",
   deletePartialFailed: "Partially failed to delete ({count} items)",
   confirmDeleteSingle: "Delete this history item?",

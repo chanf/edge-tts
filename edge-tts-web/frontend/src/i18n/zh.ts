@@ -86,6 +86,7 @@ export const zh = {
   failedToLoadVoices: "加载语音失败",
   voiceSelected: "已选择语音",
   generateFailed: "生成失败，请稍后重试",
+  downloadFailed: "下载失败，请重试（如仍失败请重启服务）",
   deleteFailed: "删除失败，请稍后重试",
   deletePartialFailed: "部分删除失败（{count} 条）",
   confirmDeleteSingle: "确认删除这条历史记录吗？",

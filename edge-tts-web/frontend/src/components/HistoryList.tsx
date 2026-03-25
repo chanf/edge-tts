@@ -135,7 +135,6 @@ export function HistoryList({
               {items.map((item) => {
                 const selected = selectedIds.includes(item.id);
                 const active = currentItemId === item.id;
-                const downloadZipUrl = apiClient.getHistoryZipUrl(item.id);
                 return (
                   <tr
                     key={item.id}
@@ -168,9 +167,13 @@ export function HistoryList({
                             <path d="M8 5v14l11-7z" />
                           </svg>
                         </button>
-                        <a
-                          href={downloadZipUrl}
-                          download={`${item.id}.zip`}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            void apiClient.downloadHistoryZip(item.id).catch(() => {
+                              window.alert(t.downloadFailed);
+                            });
+                          }}
                           aria-label={t.downloadZip}
                           title={t.downloadZip}
                           className="px-2 py-1 rounded bg-green-600 text-white hover:bg-green-700 transition-colors"
@@ -178,7 +181,7 @@ export function HistoryList({
                           <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                             <path d="M5 20h14v-2H5v2zm7-18v10.17l3.59-3.58L17 10l-5 5-5-5 1.41-1.41L11 12.17V2h1z" />
                           </svg>
-                        </a>
+                        </button>
                         <button
                           type="button"
                           onClick={() => onDeleteItem(item.id)}

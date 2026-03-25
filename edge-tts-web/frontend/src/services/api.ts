@@ -102,6 +102,39 @@ class ApiClient {
     return `${this.baseUrl}/api/tts/history/${encodeURIComponent(itemId)}/download`;
   }
 
+  private resolveFilenameFromDisposition(disposition: string | null, fallback: string): string {
+    if (!disposition) {
+      return fallback;
+    }
+    const match = disposition.match(/filename="?([^"]+)"?/i);
+    if (!match || !match[1]) {
+      return fallback;
+    }
+    return match[1];
+  }
+
+  async downloadHistoryZip(itemId: string): Promise<void> {
+    const fallbackFilename = `${itemId}.zip`;
+    const response = await fetch(this.getHistoryZipUrl(itemId));
+    if (!response.ok) {
+      throw new Error(`Download failed: ${response.status} ${response.statusText}`);
+    }
+
+    const filename = this.resolveFilenameFromDisposition(
+      response.headers.get("content-disposition"),
+      fallbackFilename
+    );
+    const blob = await response.blob();
+    const objectUrl = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = objectUrl;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(objectUrl);
+  }
+
   getWebSocketUrl(): string {
     const wsUrl = this.baseUrl.replace("http://", "ws://").replace("https://", "wss://");
     return `${wsUrl}/api/tts/ws`;
