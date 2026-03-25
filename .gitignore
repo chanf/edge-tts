@@ -177,3 +177,7 @@ node_modules/
 # 本地 AI 协作过程文件
 CLAUDE.md
 .claude/
+
+
+
+.DS_Store
