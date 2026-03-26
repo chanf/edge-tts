@@ -97,6 +97,28 @@ The application will be available at:
 - Backend API: http://localhost:6605
 - API Docs: http://localhost:6605/docs
 
+## Docker 部署
+
+在 `edge-tts-web` 目录执行：
+
+```bash
+docker compose up -d --build
+```
+
+访问地址：
+- 前端：http://localhost:6606
+- 后端：http://localhost:6605
+
+停止并清理：
+
+```bash
+docker compose down
+```
+
+说明：
+- 后端镜像已内置 `ffmpeg`（用于变速下载）。
+- 下载文件会写入 `edge-tts-web/backend/downloads`（通过 volume 挂载）。
+
 ## Storage Modes
 
 The backend supports two storage modes:

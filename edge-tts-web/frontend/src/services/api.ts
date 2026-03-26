@@ -9,7 +9,7 @@ import type {
 import type { VoicesListResponse } from "../types/voice";
 
 // Default backend port follows start.sh (6605).
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:6605";
+const API_BASE_URL = (import.meta.env.VITE_API_URL ?? "http://localhost:6605") as string;
 
 export interface VoicesParams {
   locale?: string;

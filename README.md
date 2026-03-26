@@ -125,3 +125,7 @@ cd edge-tts-web
 - `--clean-logs`：清理后端/前端日志及 PID 文件。
 - `--clean-all`：包含以上所有清理项。
 - 默认保留：`node_modules/` 与后端 `venv/`。
+
+### Docker 部署
+
+Docker 部署说明请参考 `edge-tts-web/README.md` 的“Docker 部署”章节。
