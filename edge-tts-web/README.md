@@ -1,24 +1,24 @@
 # Edge TTS Web
 
-A web-based user interface for [edge-tts](https://github.com/rany2/edge-tts), providing access to Microsoft Edge's text-to-speech service through a modern React frontend and FastAPI backend.
+基于 [edge-tts](https://github.com/rany2/edge-tts) 的 Web 界面，通过现代化的 React 前端与 FastAPI 后端访问 Microsoft Edge 在线文本转语音服务。
 
-## Features
+## 功能特性
 
-- **450+ Voices**: Access to all Microsoft Edge TTS voices in multiple languages
-- **Real-time Streaming**: WebSocket-based streaming for instant audio playback
-- **Audio Controls**: Adjust rate (-100% to +100%), volume, and pitch
-- **Subtitle Generation**: Generate SRT subtitles with word or sentence boundary options
-- **Voice Filtering**: Filter voices by locale, gender, or search by name
-- **Audio Playback**: Custom audio player with synchronized subtitle display
-- **Export**: Download generated audio + subtitles as ZIP (MP3 + SRT)
+- **450+ 语音**：覆盖 Microsoft Edge 全量语音与多语言
+- **实时流式播放**：基于 WebSocket 的即时音频流
+- **音频控制**：支持语速（-100%~+100%）、音量与音调调节
+- **字幕生成**：支持词/句边界生成 SRT 字幕
+- **语音筛选**：按地区、性别或关键字筛选
+- **音频播放**：自定义播放器与字幕同步显示
+- **导出**：下载 ZIP（MP3 + SRT）
 
-## Technology Stack
+## 技术栈
 
-- **Backend**: FastAPI (Python) with WebSocket support
-- **Frontend**: React + TypeScript + Vite
-- **Styling**: Tailwind CSS
+- **后端**：FastAPI（Python），支持 WebSocket
+- **前端**：React + TypeScript + Vite
+- **样式**：Tailwind CSS
 
-## Quick Start (推荐)
+## 快速开始（推荐）
 
 ### 一键启动
 
@@ -54,48 +54,48 @@ cd edge-tts-web
 ./stop.sh --help     # 查看所有选项
 ```
 
-## Manual Installation
+## 手动安装
 
-### Prerequisites
+### 前置依赖
 
 - Python 3.8+
 - Node.js 16+
 - pip
 
-### Backend Setup
+### 后端安装
 
 ```bash
 cd backend
 pip install -r requirements.txt
 ```
 
-### Frontend Setup
+### 前端安装
 
 ```bash
 cd frontend
 npm install
 ```
 
-## Running
+## 运行方式
 
-### Development Mode
+### 开发模式
 
-**Terminal 1 - Backend:**
+**终端 1 - 后端：**
 ```bash
 cd backend
 uvicorn app.main:app --reload --port 6605
 ```
 
-**Terminal 2 - Frontend:**
+**终端 2 - 前端：**
 ```bash
 cd frontend
 npm run dev
 ```
 
-The application will be available at:
-- Frontend: http://localhost:6606
-- Backend API: http://localhost:6605
-- API Docs: http://localhost:6605/docs
+访问地址：
+- 前端：http://localhost:6606
+- 后端 API：http://localhost:6605
+- API 文档：http://localhost:6605/docs
 
 ## Docker 部署
 
@@ -119,23 +119,23 @@ docker compose down
 - 后端镜像已内置 `ffmpeg`（用于变速下载）。
 - 下载文件会写入 `edge-tts-web/backend/downloads`（通过 volume 挂载）。
 
-## Storage Modes
+## 存储模式
 
-The backend supports two storage modes:
+后端支持两种存储模式：
 
-- `local` (default): store audio/subtitles/history under `backend/downloads`
-- `cloudflare`: store audio/subtitles in R2 and history metadata in D1
+- `local`（默认）：音频/字幕/历史存储在 `backend/downloads`
+- `cloudflare`：音频/字幕存 R2，历史元数据存 D1
 
-Switch storage mode via environment variable:
+通过环境变量切换：
 
 ```bash
 EDGE_TTS_STORAGE_MODE=local
 EDGE_TTS_STORAGE_MODE=cloudflare
 ```
 
-## Cloudflare Deployment (Containers + R2 + D1)
+## Cloudflare 部署（Containers + R2 + D1）
 
-### Required Environment Variables
+### 必要环境变量
 
 ```bash
 # Storage mode
@@ -154,14 +154,14 @@ CF_R2_SECRET_ACCESS_KEY=***
 CF_ACCOUNT_ID=***
 CF_D1_DATABASE_ID=***
 CF_D1_API_TOKEN=***
+```
 
 ### 变速下载依赖
 
 播放器支持按播放速度下载变速 ZIP（MP3 + SRT）。此功能需要后端运行环境可用 `ffmpeg`。
 Cloudflare Containers 镜像请确保安装 `ffmpeg`，否则 `speed!=1` 的下载会失败。
-```
 
-### D1 Schema
+### D1 表结构
 
 ```sql
 CREATE TABLE IF NOT EXISTS tts_history (
@@ -183,50 +183,50 @@ CREATE INDEX IF NOT EXISTS idx_tts_history_created_at ON tts_history(created_at 
 CREATE INDEX IF NOT EXISTS idx_tts_history_voice ON tts_history(voice);
 ```
 
-### Production Mode
+### 生产模式
 
 ```bash
-# Build frontend
+# 构建前端
 cd frontend
 npm run build
 
-# Run backend with production frontend
+# 以前端产物运行后端
 cd ../backend
 uvicorn app.main:app --host 0.0.0.0 --port 6605
 ```
 
-## API Endpoints
+## API 接口
 
-- `GET /api/health` - Health check
-- `GET /api/voices` - List all available voices (with optional filtering)
-- `POST /api/tts/generate` - Generate audio and subtitle files
-- `WebSocket /api/tts/ws` - Real-time TTS streaming
-- `GET /downloads/{filename}` - Download generated files
+- `GET /api/health` - 健康检查
+- `GET /api/voices` - 获取语音列表（支持筛选）
+- `POST /api/tts/generate` - 生成音频与字幕
+- `WebSocket /api/tts/ws` - 实时流式 TTS
+- `GET /downloads/{filename}` - 下载生成文件
 
-## Project Structure
+## 项目结构
 
 ```
 edge-tts-web/
 ├── backend/
 │   ├── app/
-│   │   ├── main.py              # FastAPI application
+│   │   ├── main.py              # FastAPI 入口
 │   │   ├── api/
-│   │   │   ├── routes/          # API endpoints
-│   │   │   └── websocket/       # WebSocket handlers
-│   │   ├── models/              # Pydantic models
-│   │   └── services/            # Business logic
+│   │   │   ├── routes/          # API 路由
+│   │   │   └── websocket/       # WebSocket 处理
+│   │   ├── models/              # Pydantic 模型
+│   │   └── services/            # 业务逻辑
 │   └── requirements.txt
 ├── frontend/
 │   ├── src/
-│   │   ├── components/          # React components
-│   │   ├── hooks/               # Custom React hooks
-│   │   ├── contexts/            # React Context providers
-│   │   ├── services/            # API client
-│   │   └── types/               # TypeScript types
+│   │   ├── components/          # React 组件
+│   │   ├── hooks/               # 自定义 Hooks
+│   │   ├── contexts/            # Context 提供者
+│   │   ├── services/            # API 客户端
+│   │   └── types/               # TypeScript 类型
 │   └── package.json
 └── README.md
 ```
 
-## License
+## 许可
 
-This project uses the [edge-tts](https://github.com/rany2/edge-tts) library, which is licensed under LGPL 3.0.
+本项目使用 [edge-tts](https://github.com/rany2/edge-tts)，其许可证为 LGPL 3.0。
