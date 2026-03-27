@@ -35,6 +35,7 @@ function AppContent() {
   const [playRequest, setPlayRequest] = useState<{ id: string; token: number } | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [currentTimeSec, setCurrentTimeSec] = useState(0);
   const currentItem = historyItems.find((item) => item.id === currentItemId) || null;
 
   const canGenerate = config.text.trim().length > 0 && !isGenerating;
@@ -116,14 +117,13 @@ function AppContent() {
         <div className="max-w-7xl mx-auto px-4 py-6 flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">{t.appTitle}</h1>
-            <p className="text-gray-600 mt-1">{t.appSubtitle}</p>
           </div>
           <LanguageSwitcher />
         </div>
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-8 space-y-6">
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-stretch">
           <div className="space-y-6">
             <TextInput />
             <VoiceSelector />
@@ -145,14 +145,18 @@ function AppContent() {
             )}
           </div>
 
-          <div className="space-y-6">
+          <div className="space-y-6 flex flex-col h-full">
             <AudioPlayer
               items={historyItems}
               currentItemId={currentItemId}
               onCurrentItemChange={setCurrentItemId}
               playRequest={playRequest}
+              onTimeUpdate={setCurrentTimeSec}
             />
-            <SubtitleDisplay subtitleUrl={currentItem?.subtitle_url || null} />
+            <SubtitleDisplay
+              subtitleUrl={currentItem?.subtitle_url || null}
+              currentTimeSec={currentTimeSec}
+            />
           </div>
         </div>
         <HistoryList

@@ -6,6 +6,7 @@ import type { SubtitleCue } from "../types/api";
 
 interface SubtitleDisplayProps {
   subtitleUrl: string | null;
+  currentTimeSec: number;
 }
 
 function parseSrtTimeToTimestamp(value: string): number {
@@ -21,7 +22,7 @@ function parseSrtTimeToTimestamp(value: string): number {
   return ((hours * 60 + minutes) * 60 + seconds) * 1000 + millis;
 }
 
-function parseSrt(content: string): SubtitleCue[] {
+function parseSrt(content: string): Array<SubtitleCue & { startMs: number; endMs: number }> {
   return content
     .split(/\r?\n\r?\n/)
     .map((block) => block.trim())
@@ -43,18 +44,19 @@ function parseSrt(content: string): SubtitleCue[] {
         end: endRaw,
         text: lines.slice(2).join(" "),
         startMs: parseSrtTimeToTimestamp(startRaw),
+        endMs: parseSrtTimeToTimestamp(endRaw),
       };
     })
-    .filter((cue): cue is SubtitleCue & { startMs: number } => cue !== null)
-    .sort((a, b) => a.startMs - b.startMs)
-    .map(({ startMs: _unused, ...cue }) => cue);
+    .filter((cue): cue is SubtitleCue & { startMs: number; endMs: number } => cue !== null)
+    .sort((a, b) => a.startMs - b.startMs);
 }
 
-export function SubtitleDisplay({ subtitleUrl }: SubtitleDisplayProps) {
-  const [cues, setCues] = useState<SubtitleCue[]>([]);
+export function SubtitleDisplay({ subtitleUrl, currentTimeSec }: SubtitleDisplayProps) {
+  const [cues, setCues] = useState<Array<SubtitleCue & { startMs: number; endMs: number }>>([]);
   const [loading, setLoading] = useState(false);
   const t = useT();
   const count = cues.length;
+  const currentTimeMs = currentTimeSec * 1000;
 
   useEffect(() => {
     let canceled = false;
@@ -93,7 +95,7 @@ export function SubtitleDisplay({ subtitleUrl }: SubtitleDisplayProps) {
   }, [subtitleUrl]);
 
   return (
-    <div className="bg-white rounded-lg shadow p-6">
+    <div className="bg-white rounded-lg shadow p-6 flex flex-col h-full">
       <div className="mb-4">
         <h3 className="text-lg font-semibold text-gray-700">
           {t.subtitles} ({count})
@@ -107,7 +109,7 @@ export function SubtitleDisplay({ subtitleUrl }: SubtitleDisplayProps) {
           {t.noSubtitles}
         </p>
       ) : (
-        <div className="max-h-64 overflow-y-auto border border-gray-200 rounded-lg">
+        <div className="flex-1 overflow-y-auto border border-gray-200 rounded-lg">
           <table className="w-full text-sm">
             <thead className="bg-gray-50 sticky top-0">
               <tr>
@@ -117,15 +119,21 @@ export function SubtitleDisplay({ subtitleUrl }: SubtitleDisplayProps) {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {cues.map((cue) => (
-                <tr key={cue.index} className="hover:bg-gray-50">
+              {cues.map((cue) => {
+                const isActive = currentTimeMs >= cue.startMs && currentTimeMs <= cue.endMs;
+                return (
+                <tr
+                  key={cue.index}
+                  className={isActive ? "bg-green-100 text-gray-900" : "hover:bg-gray-50"}
+                >
                   <td className="px-4 py-2 text-gray-600">{cue.index}</td>
                   <td className="px-4 py-2 text-gray-600 font-mono text-xs">
-                    {cue.start} → {cue.end}
+                    {cue.start}
                   </td>
                   <td className="px-4 py-2 text-gray-800">{cue.text}</td>
                 </tr>
-              ))}
+              );
+              })}
             </tbody>
           </table>
         </div>

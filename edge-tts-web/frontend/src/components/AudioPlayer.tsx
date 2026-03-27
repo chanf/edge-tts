@@ -16,6 +16,7 @@ interface AudioPlayerProps {
   currentItemId: string | null;
   onCurrentItemChange: (id: string | null) => void;
   playRequest: { id: string; token: number } | null;
+  onTimeUpdate: (timeSec: number) => void;
 }
 
 function parseSrtTimeToSeconds(value: string): number {
@@ -82,6 +83,7 @@ export function AudioPlayer({
   currentItemId,
   onCurrentItemChange,
   playRequest,
+  onTimeUpdate,
 }: AudioPlayerProps) {
   const t = useT();
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -94,7 +96,6 @@ export function AudioPlayer({
   const [playbackRate, setPlaybackRate] = useState(1);
   const [loopPlaylist, setLoopPlaylist] = useState(false);
   const [subtitleCues, setSubtitleCues] = useState<SubtitleCue[]>([]);
-  const [currentSubtitle, setCurrentSubtitle] = useState("");
 
   const currentIndex = useMemo(
     () => items.findIndex((item) => item.id === currentItemId),
@@ -207,6 +208,36 @@ export function AudioPlayer({
     });
   }, [currentItem, playbackRate, t.downloadFailed]);
 
+  const handleCopyText = useCallback(() => {
+    if (!currentItem?.text) {
+      return;
+    }
+    const text = currentItem.text;
+    if (navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(text).catch(() => {
+        window.alert(t.copyFailed);
+      });
+      return;
+    }
+
+    try {
+      const textarea = document.createElement("textarea");
+      textarea.value = text;
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
+      document.body.appendChild(textarea);
+      textarea.focus();
+      textarea.select();
+      const success = document.execCommand("copy");
+      document.body.removeChild(textarea);
+      if (!success) {
+        window.alert(t.copyFailed);
+      }
+    } catch {
+      window.alert(t.copyFailed);
+    }
+  }, [currentItem?.text, t.copyFailed]);
+
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) {
@@ -226,7 +257,6 @@ export function AudioPlayer({
   useEffect(() => {
     let canceled = false;
     setSubtitleCues([]);
-    setCurrentSubtitle("");
     if (!currentItem?.subtitle_url) {
       return;
     }
@@ -262,20 +292,18 @@ export function AudioPlayer({
 
     const handleTimeUpdate = () => {
       setCurrentTime(audio.currentTime);
-      const cue = subtitleCues.find(
-        (item) => audio.currentTime >= item.start && audio.currentTime <= item.end
-      );
-      setCurrentSubtitle(cue?.text || "");
+      onTimeUpdate(audio.currentTime);
     };
     const handleLoadedMetadata = () => {
       setDuration(Number.isFinite(audio.duration) ? audio.duration : 0);
       setCurrentTime(audio.currentTime || 0);
+      onTimeUpdate(audio.currentTime || 0);
     };
     const handlePlay = () => setIsPlaying(true);
     const handlePause = () => setIsPlaying(false);
     const handleEnded = () => {
       setIsPlaying(false);
-      setCurrentSubtitle("");
+      onTimeUpdate(audio.currentTime || 0);
       goToNext();
     };
 
@@ -292,7 +320,7 @@ export function AudioPlayer({
       audio.removeEventListener("pause", handlePause);
       audio.removeEventListener("ended", handleEnded);
     };
-  }, [goToNext, subtitleCues]);
+  }, [goToNext, onTimeUpdate, subtitleCues]);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -308,6 +336,7 @@ export function AudioPlayer({
       setCurrentTime(0);
       setIsPlaying(false);
     }
+    setPlaybackRate(1);
   }, [currentItem?.id]);
 
   useEffect(() => {
@@ -384,7 +413,18 @@ export function AudioPlayer({
   return (
     <div className="bg-white rounded-lg shadow p-6">
       <h3 className="text-lg font-semibold text-gray-700 mb-3">{t.audioPlayer}</h3>
-      <p className="text-sm text-gray-500 mb-4">{currentItem.text_preview}</p>
+      <p className="text-sm text-gray-500 mb-4 leading-relaxed">
+        <span className="break-words">{currentItem.text_preview}</span>
+        <button
+          type="button"
+          onClick={handleCopyText}
+          className="ml-2 inline-flex items-center text-xs text-blue-600 hover:text-blue-700"
+          aria-label={t.copy}
+          title={t.copy}
+        >
+          {t.copy}
+        </button>
+      </p>
 
       <audio ref={audioRef} src={currentItem.audio_url} preload="metadata" />
 
@@ -527,11 +567,6 @@ export function AudioPlayer({
           </label>
         </div>
 
-        {currentSubtitle && (
-          <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-gray-800">
-            {currentSubtitle}
-          </div>
-        )}
       </div>
     </div>
   );
