@@ -35,6 +35,13 @@ class ApiClient {
     this.baseUrl = baseUrl;
   }
 
+  private getBaseOrigin(): string {
+    if (this.baseUrl) {
+      return this.baseUrl;
+    }
+    return window.location.origin;
+  }
+
   private async request<T>(
     endpoint: string,
     options?: RequestInit
@@ -109,7 +116,7 @@ class ApiClient {
   }
 
   getHistoryZipUrl(itemId: string, speed?: number): string {
-    const url = new URL(`${this.baseUrl}/api/tts/history/${encodeURIComponent(itemId)}/download`);
+    const url = new URL(`/api/tts/history/${encodeURIComponent(itemId)}/download`, this.getBaseOrigin());
     if (typeof speed === "number") {
       url.searchParams.set("speed", String(speed));
     }
@@ -118,7 +125,8 @@ class ApiClient {
 
   getHistoryAudioUrl(itemId: string, speed?: number): string {
     const url = new URL(
-      `${this.baseUrl}/api/tts/history/${encodeURIComponent(itemId)}/download-audio`
+      `/api/tts/history/${encodeURIComponent(itemId)}/download-audio`,
+      this.getBaseOrigin()
     );
     if (typeof speed === "number") {
       url.searchParams.set("speed", String(speed));
