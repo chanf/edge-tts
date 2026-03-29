@@ -36,10 +36,11 @@ function AppContent() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [currentTimeSec, setCurrentTimeSec] = useState(0);
-  const [activeTab, setActiveTab] = useState<"basic" | "long">("basic");
+  const [activeTab, setActiveTab] = useState<"basic" | "long" | "batch">("basic");
   const [segmentError, setSegmentError] = useState<string | null>(null);
   const [segmentProgress, setSegmentProgress] = useState<{ current: number; total: number } | null>(null);
   const [isMerging, setIsMerging] = useState(false);
+  const [batchError, setBatchError] = useState<string | null>(null);
   const currentItem = historyItems.find((item) => item.id === currentItemId) || null;
 
   const canGenerate = config.text.trim().length > 0 && !isGenerating;
@@ -170,6 +171,23 @@ function AppContent() {
     [segments]
   );
 
+  const batchLines = useMemo(() => {
+    const normalized = config.text.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+    const lines = normalized
+      .split("\n")
+      .map((line) => line.trim())
+      .filter(Boolean);
+    return lines.map((line, idx) => ({
+      index: idx + 1,
+      text: line,
+      length: Array.from(line).length,
+    }));
+  }, [config.text]);
+  const batchTotalChars = useMemo(
+    () => batchLines.reduce((sum, line) => sum + line.length, 0),
+    [batchLines]
+  );
+
   const handleGenerateLongText = async () => {
     if (segments.length === 0 || isGenerating) {
       return;
@@ -230,6 +248,57 @@ function AppContent() {
       setIsGenerating(false);
       setSegmentProgress(null);
       setIsMerging(false);
+    }
+  };
+
+  const handleGenerateBatch = async () => {
+    if (batchLines.length === 0 || isGenerating) {
+      return;
+    }
+    setBatchError(null);
+    setSegmentProgress({ current: 0, total: batchLines.length });
+    setIsGenerating(true);
+
+    let failedLine = 1;
+    let failedSegment = 1;
+    try {
+      for (let i = 0; i < batchLines.length; i += 1) {
+        const line = batchLines[i];
+        failedLine = i + 1;
+        const lineSegments =
+          line.length > 1000
+            ? splitLongText(line.text)
+            : [{ index: 1, text: line.text, length: line.length }];
+
+        for (let j = 0; j < lineSegments.length; j += 1) {
+          const segment = lineSegments[j];
+          failedSegment = j + 1;
+          setSegmentProgress({ current: i + 1, total: batchLines.length });
+          const response = await apiClient.generateTTS({
+            text: segment.text,
+            voice: config.voice,
+            rate: config.rate,
+            volume: config.volume,
+            pitch: config.pitch,
+            boundary: config.boundary,
+            generate_subtitles: true,
+          });
+          if (response.history_item) {
+            addHistoryItem(response.history_item);
+            setCurrentItemId(response.history_item.id);
+          }
+        }
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : t.generateFailed;
+      setBatchError(
+        t.batchFailed
+          .replace("{line}", String(failedLine))
+          .replace("{segment}", String(failedSegment)) + message
+      );
+    } finally {
+      setIsGenerating(false);
+      setSegmentProgress(null);
     }
   };
 
@@ -311,6 +380,17 @@ function AppContent() {
               >
                 {t.longTtsTab}
               </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab("batch")}
+                className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-colors ${
+                  activeTab === "batch"
+                    ? "bg-blue-600 text-white"
+                    : "text-gray-600 hover:bg-gray-100"
+                }`}
+              >
+                {t.batchTtsTab}
+              </button>
             </div>
 
             <TextInput />
@@ -335,7 +415,7 @@ function AppContent() {
                   </div>
                 )}
               </>
-            ) : (
+            ) : activeTab === "long" ? (
               <>
                 <div className="bg-white rounded-lg shadow p-6">
                   <h3 className="text-lg font-semibold text-gray-700 mb-3">{t.splitPreview}</h3>
@@ -383,6 +463,53 @@ function AppContent() {
                 {segmentError && (
                   <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
                     {segmentError}
+                  </div>
+                )}
+              </>
+            ) : (
+              <>
+                <div className="bg-white rounded-lg shadow p-6">
+                  <h3 className="text-lg font-semibold text-gray-700 mb-3">{t.batchPreview}</h3>
+                  <div className="flex flex-wrap gap-4 text-sm text-gray-600">
+                    <span>{t.lineCount.replace("{count}", String(batchLines.length))}</span>
+                    <span>{t.totalChars.replace("{count}", String(batchTotalChars))}</span>
+                  </div>
+                  <div className="mt-4 max-h-48 overflow-y-auto border border-gray-200 rounded-lg">
+                    <ul className="divide-y divide-gray-200 text-sm">
+                      {batchLines.map((line) => (
+                        <li key={line.index} className="px-4 py-3">
+                          <div className="text-gray-500 mb-1">
+                            {t.lineLabel
+                              .replace("{index}", String(line.index))
+                              .replace("{length}", String(line.length))}
+                          </div>
+                          <div className="text-gray-800 whitespace-pre-wrap">{line.text}</div>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleGenerateBatch}
+                  disabled={batchLines.length === 0 || isGenerating}
+                  className={`w-full py-4 px-6 rounded-lg font-semibold text-white transition-colors ${
+                    batchLines.length > 0 && !isGenerating
+                      ? "bg-blue-600 hover:bg-blue-700"
+                      : "bg-gray-400 cursor-not-allowed"
+                  }`}
+                >
+                  {isGenerating && segmentProgress
+                    ? t.generatingSegments
+                        .replace("{current}", String(segmentProgress.current))
+                        .replace("{total}", String(segmentProgress.total))
+                    : t.generateAll}
+                </button>
+
+                {batchError && (
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
+                    {batchError}
                   </div>
                 )}
               </>

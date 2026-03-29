@@ -22,6 +22,7 @@ export const zh = {
   // Tabs
   basicTtsTab: "基础 TTS",
   longTtsTab: "长文本 TTS",
+  batchTtsTab: "批量模式",
 
   // VoiceSelector
   selectVoice: "选择语音",
@@ -127,6 +128,12 @@ export const zh = {
   segmentCount: "分段数：{count}",
   totalChars: "总字数：{count}",
   segmentLabel: "第 {index} 段 · {length} 字",
+
+  // Batch
+  batchPreview: "批量预览",
+  lineCount: "行数：{count}",
+  lineLabel: "第 {index} 行 · {length} 字",
+  batchFailed: "第 {line} 行第 {segment} 段生成失败：",
 };
 
 export type Translations = typeof zh;

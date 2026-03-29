@@ -22,6 +22,7 @@ export const en = {
   // Tabs
   basicTtsTab: "Basic TTS",
   longTtsTab: "Long Text TTS",
+  batchTtsTab: "Batch Mode",
 
   // VoiceSelector
   selectVoice: "Select Voice",
@@ -127,4 +128,10 @@ export const en = {
   segmentCount: "Segments: {count}",
   totalChars: "Total chars: {count}",
   segmentLabel: "Segment {index} · {length} chars",
+
+  // Batch
+  batchPreview: "Batch Preview",
+  lineCount: "Lines: {count}",
+  lineLabel: "Line {index} · {length} chars",
+  batchFailed: "Line {line} segment {segment} failed: ",
 };
