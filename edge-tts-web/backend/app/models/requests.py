@@ -32,3 +32,17 @@ class HistoryDeleteRequest(BaseModel):
     """Request model for deleting history items."""
 
     ids: List[str] = Field(..., min_length=1, description="History item IDs to delete")
+
+
+class HistoryMergeRequest(BaseModel):
+    """Request model for merging history items."""
+
+    ids: List[str] = Field(..., min_length=1, description="History item IDs to merge")
+    text: str = Field(..., min_length=1, max_length=100000, description="Merged text content")
+    voice: str = Field(..., description="Voice name")
+    rate: str = Field(default="+0%", pattern=r"^[+-]\d+%$", description="Rate adjustment")
+    volume: str = Field(default="+0%", pattern=r"^[+-]\d+%$", description="Volume adjustment")
+    pitch: str = Field(default="+0Hz", pattern=r"^[+-]\d+Hz$", description="Pitch adjustment")
+    boundary: Literal["WordBoundary", "SentenceBoundary"] = Field(
+        default="SentenceBoundary", description="Type of boundary for subtitles"
+    )

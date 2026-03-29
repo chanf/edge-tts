@@ -19,6 +19,10 @@ export const zh = {
   words: "单词",
   characters: "字符",
 
+  // Tabs
+  basicTtsTab: "基础 TTS",
+  longTtsTab: "长文本 TTS",
+
   // VoiceSelector
   selectVoice: "选择语音",
   allVoices: "所有语音",
@@ -49,6 +53,11 @@ export const zh = {
   // Generate Button
   generate: "生成语音",
   generating: "生成中...",
+  generateAll: "一键生成全部",
+  generatingSegments: "生成中...（{current}/{total}）",
+  segmentFailed: "第 {index} 段生成失败：",
+  mergingAudio: "正在合并音频...",
+  mergeFailed: "合并音频失败：",
   chunks: "数据块",
   new: "新建",
 
@@ -112,6 +121,12 @@ export const zh = {
   previousPage: "上一页",
   nextPage: "下一页",
   pageLabel: "第 {page} / {total} 页",
+
+  // Long text
+  splitPreview: "分段预览",
+  segmentCount: "分段数：{count}",
+  totalChars: "总字数：{count}",
+  segmentLabel: "第 {index} 段 · {length} 字",
 };
 
 export type Translations = typeof zh;

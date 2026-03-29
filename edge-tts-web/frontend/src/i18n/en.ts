@@ -19,6 +19,10 @@ export const en = {
   words: "words",
   characters: "characters",
 
+  // Tabs
+  basicTtsTab: "Basic TTS",
+  longTtsTab: "Long Text TTS",
+
   // VoiceSelector
   selectVoice: "Select Voice",
   allVoices: "All Voices",
@@ -49,6 +53,11 @@ export const en = {
   // Generate Button
   generate: "Generate Speech",
   generating: "Generating...",
+  generateAll: "Generate All",
+  generatingSegments: "Generating... ({current}/{total})",
+  segmentFailed: "Segment {index} failed: ",
+  mergingAudio: "Merging audio...",
+  mergeFailed: "Audio merge failed: ",
   chunks: "chunks",
   new: "New",
 
@@ -112,4 +121,10 @@ export const en = {
   previousPage: "Prev",
   nextPage: "Next",
   pageLabel: "Page {page} / {total}",
+
+  // Long text
+  splitPreview: "Split Preview",
+  segmentCount: "Segments: {count}",
+  totalChars: "Total chars: {count}",
+  segmentLabel: "Segment {index} · {length} chars",
 };

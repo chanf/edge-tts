@@ -2,6 +2,46 @@
 
 `edge-tts` 是一个 Python 模块，可在 Python 代码中或通过命令行工具 `edge-tts`、`edge-playback` 调用 Microsoft Edge 的在线文本转语音服务。
 
+## 项目概览
+
+本仓库包含两部分：
+1. **核心库/命令行工具**：`edge-tts` Python 模块与 CLI。
+2. **Web 子项目**：`edge-tts-web`，提供可视化前端与后端 API 服务。
+
+## 功能简介
+
+**核心库/CLI：**
+- 文本转语音（TTS），支持语速/音量/音调调节
+- 语音列表查询与多语言/多发音人选择
+- 生成音频（MP3）与字幕（SRT）
+
+**Web 子项目（edge-tts-web）：**
+- 语音选择与筛选（地区/性别/关键词）
+- 生成音频与字幕，支持 ZIP 下载（MP3 + SRT）
+- 播放器控制（播放/暂停/上下一个/循环/变速）
+- 历史记录（搜索、分页、删除、下载）
+- 字幕列表高亮当前播放句
+- 本地部署与 Docker 部署
+
+## 演进过程（简述）
+
+1. **CLI/库为核心**：最初以 `edge-tts` 为主，提供 CLI 与 Python 接口。
+2. **引入 Web 可视化**：新增 `edge-tts-web`，以 FastAPI + React 提供可视化与 API。
+3. **功能增强**：
+   - 历史记录、字幕显示与下载
+   - 播放器能力增强（变速下载、进度条同步）
+   - Docker 部署与 Cloudflare 双存储模式支持
+
+## 当前状态
+
+- **稳定可用**：本地脚本与 Docker 均可运行
+- **双存储模式**：
+  - `local`（默认）：文件存 `backend/downloads`
+  - `cloudflare`：音频/字幕存 R2、历史存 D1
+- **下载**：
+  - ZIP（MP3 + SRT）支持按播放速度变速（不持久化）
+  - 支持仅下载音频（按播放速度变速）
+
 ## 安装
 
 使用 `pip` 安装：
@@ -129,3 +169,18 @@ cd edge-tts-web
 ### Docker 部署
 
 Docker 部署说明请参考 `edge-tts-web/README.md` 的“Docker 部署”章节。
+
+## 目录结构说明
+
+```
+edge-tts/
+├── edge-tts-web/          # Web 子项目（前端 + 后端）
+│   ├── backend/           # FastAPI 后端
+│   ├── frontend/          # React 前端
+│   ├── start.sh           # 一键启动脚本
+│   ├── stop.sh            # 停止/清理脚本
+│   └── README.md          # Web 子项目说明
+├── src/                   # edge-tts 核心库源码
+├── examples/              # 示例代码
+└── README.md              # 本文档
+```

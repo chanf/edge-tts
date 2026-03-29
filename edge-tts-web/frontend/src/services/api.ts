@@ -4,6 +4,7 @@ import type {
   HealthResponse,
   HistoryDeleteResponse,
   HistoryListResponse,
+  HistoryItem,
   TTSGenerateResponse,
 } from "../types/api";
 import type { VoicesListResponse } from "../types/voice";
@@ -187,6 +188,23 @@ class ApiClient {
     link.click();
     document.body.removeChild(link);
     window.URL.revokeObjectURL(objectUrl);
+  }
+
+  async mergeHistory(
+    ids: string[],
+    payload: {
+      text: string;
+      voice: string;
+      rate: string;
+      volume: string;
+      pitch: string;
+      boundary: "WordBoundary" | "SentenceBoundary";
+    }
+  ): Promise<HistoryItem> {
+    return this.request("/api/tts/history/merge", {
+      method: "POST",
+      body: JSON.stringify({ ids, ...payload }),
+    });
   }
 
   getWebSocketUrl(): string {
